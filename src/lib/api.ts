@@ -165,28 +165,25 @@ export const api = {
           });
           if (res.ok) {
             const body = await res.json();
-            const token = body.data?.accessToken || body.accessToken || body.data?.token || body.token || `jwt_${Date.now()}`;
-            const refreshToken = body.data?.refreshToken || body.refreshToken || "";
-            const decoded = decodeJwtToken(token) || {};
-            const userObj = body.data?.user || body.user || decoded || body.data || body;
+            const userObj = body.data?.user || body.user || body.data || body;
             
             const normalizedUser: User = {
-              id: userObj.id || userObj._id || userObj.userId || decoded.id || decoded.userId || `usr-${Date.now()}`,
-              name: userObj.name || decoded.name || data.name,
-              email: userObj.email || decoded.email || data.email,
-              role: (userObj.role || decoded.role || data.role || "customer").toLowerCase() as UserRole,
+              id: userObj.id || userObj._id || userObj.userId || `usr-${Date.now()}`,
+              name: userObj.name || data.name,
+              email: userObj.email || data.email,
+              role: (userObj.role || data.role || "customer").toLowerCase() as UserRole,
               avatar: userObj.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
               status: userObj.status || "active",
               createdAt: userObj.createdAt || new Date().toISOString(),
             };
 
+            const token = body.data?.token || body.token || `jwt_${Date.now()}`;
+
             if (typeof window !== "undefined") {
               localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(normalizedUser));
               localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-              if (refreshToken) localStorage.setItem("gearup_refresh_token", refreshToken);
               document.cookie = `gearup_role=${normalizedUser.role}; path=/; max-age=86400`;
               document.cookie = `gearup_token=${token}; path=/; max-age=86400`;
-              document.cookie = `accessToken=${token}; path=/; max-age=86400`;
             }
 
             return { user: normalizedUser, token };
