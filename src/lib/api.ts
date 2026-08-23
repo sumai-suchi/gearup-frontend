@@ -96,10 +96,26 @@ export const api = {
       name: string;
       email: string;
       role: "customer" | "provider";
-      phone?: string;
-      address?: string;
+      password?: string;
     }): Promise<{ user: User; token: string }> {
       await delay(300);
+      if (API_BASE) {
+        try {
+          const res = await fetch(`${API_BASE}/api/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: data.name,
+              email: data.email,
+              role: data.role,
+              password: data.password,
+            }),
+          });
+          if (res.ok) return await res.json();
+        } catch (e) {
+          console.warn("Backend API unavailable, falling back to mock engine", e);
+        }
+      }
       const users = getStored<User>(STORAGE_KEYS.USERS, memUsers);
       if (users.some((u) => u.email.toLowerCase() === data.email.toLowerCase())) {
         throw new Error("An account with this email already exists.");
@@ -110,8 +126,8 @@ export const api = {
         name: data.name,
         email: data.email,
         role: data.role,
-        phone: data.phone || "+1 (555) 000-0000",
-        address: data.address || "Local Explorer",
+        phone: "+1 (555) 000-0000",
+        address: "Local Explorer",
         avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80`,
         status: "active",
         createdAt: new Date().toISOString(),

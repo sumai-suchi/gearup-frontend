@@ -13,10 +13,8 @@ interface AuthContextType {
   register: (data: {
     name: string;
     email: string;
-    password?: string;
     role: "customer" | "provider";
-    phone?: string;
-    address?: string;
+    password?: string;
   }) => Promise<void>;
   logout: () => void;
   switchDemoRole: (role: UserRole) => Promise<void>;
@@ -67,10 +65,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: {
     name: string;
     email: string;
-    password?: string;
     role: "customer" | "provider";
-    phone?: string;
-    address?: string;
+    password?: string;
   }) => {
     setIsLoading(true);
     try {
