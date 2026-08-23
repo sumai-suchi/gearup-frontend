@@ -1,19 +1,17 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/request";
+﻿import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("gearup_token")?.value;
   const role = request.cookies.get("gearup_role")?.value;
 
-  // Protected customer dashboard
   if (pathname.startsWith("/dashboard/customer")) {
     if (!token) {
       return NextResponse.redirect(new URL(`/auth/login?redirect=${encodeURIComponent(pathname)}`, request.url));
     }
   }
 
-  // Protected provider dashboard
   if (pathname.startsWith("/dashboard/provider")) {
     if (!token) {
       return NextResponse.redirect(new URL(`/auth/login?redirect=${encodeURIComponent(pathname)}`, request.url));
@@ -23,7 +21,6 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Protected admin dashboard
   if (pathname.startsWith("/dashboard/admin")) {
     if (!token) {
       return NextResponse.redirect(new URL(`/auth/login?redirect=${encodeURIComponent(pathname)}`, request.url));
