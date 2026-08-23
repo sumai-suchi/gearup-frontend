@@ -3,13 +3,19 @@ import {
   RentalOrder,
   RentalOrderStatus,
   User,
+  UserRole,
   Review,
   PlatformStats,
   GearCategory,
 } from "@/types";
 import { INITIAL_USERS, INITIAL_GEAR, INITIAL_ORDERS, INITIAL_REVIEWS } from "./mockData";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+const rawApiBase = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE = rawApiBase
+  ? rawApiBase.startsWith("http://") || rawApiBase.startsWith("https://")
+    ? rawApiBase.replace(/\/+$/, "")
+    : `https://${rawApiBase.replace(/\/+$/, "")}`
+  : undefined;
 
 // Local persistent mock store keys
 const STORAGE_KEYS = {
@@ -50,6 +56,23 @@ function setStored<T>(key: string, data: T[]): void {
   }
 }
 
+function decodeJwtToken(token: string): any {
+  try {
+    const base64Url = token.split(".")[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
 // Simulated network delay for realistic UI loading states & skeletons
 const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -62,9 +85,37 @@ export const api = {
           const res = await fetch(`${API_BASE}/api/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({ email, password }),
           });
-          if (res.ok) return await res.json();
+          if (res.ok) {
+            const body = await res.json();
+            const token = body.data?.accessToken || body.accessToken || body.data?.token || body.token || `jwt_${Date.now()}`;
+            const refreshToken = body.data?.refreshToken || body.refreshToken || "";
+            const decoded = decodeJwtToken(token) || {};
+            const userObj = body.data?.user || body.user || decoded || body.data || body;
+            
+            const normalizedUser: User = {
+              id: userObj.id || userObj._id || userObj.userId || decoded.id || decoded.userId || `usr-${Date.now()}`,
+              name: userObj.name || userObj.userName || decoded.name || email.split("@")[0],
+              email: userObj.email || decoded.email || email,
+              role: (userObj.role || decoded.role || "customer").toLowerCase() as UserRole,
+              avatar: userObj.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
+              status: userObj.status || "active",
+              createdAt: userObj.createdAt || new Date().toISOString(),
+            };
+
+            if (typeof window !== "undefined") {
+              localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(normalizedUser));
+              localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+              if (refreshToken) localStorage.setItem("gearup_refresh_token", refreshToken);
+              document.cookie = `gearup_role=${normalizedUser.role}; path=/; max-age=86400`;
+              document.cookie = `gearup_token=${token}; path=/; max-age=86400`;
+              document.cookie = `accessToken=${token}; path=/; max-age=86400`;
+            }
+
+            return { user: normalizedUser, token };
+          }
         } catch (e) {
           console.warn("Backend API unavailable, falling back to mock engine", e);
         }
@@ -95,15 +146,16 @@ export const api = {
     async register(data: {
       name: string;
       email: string;
-      role: "customer" | "provider";
+      role: "customer" | "provider" | "CUSTOMER" | "PROVIDER";
       password?: string;
     }): Promise<{ user: User; token: string }> {
       await delay(300);
       if (API_BASE) {
         try {
-          const res = await fetch(`${API_BASE}/api/auth/register`, {
+          const res = await fetch(`${API_BASE}/api/users/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({
               name: data.name,
               email: data.email,
@@ -111,7 +163,34 @@ export const api = {
               password: data.password,
             }),
           });
-          if (res.ok) return await res.json();
+          if (res.ok) {
+            const body = await res.json();
+            const token = body.data?.accessToken || body.accessToken || body.data?.token || body.token || `jwt_${Date.now()}`;
+            const refreshToken = body.data?.refreshToken || body.refreshToken || "";
+            const decoded = decodeJwtToken(token) || {};
+            const userObj = body.data?.user || body.user || decoded || body.data || body;
+            
+            const normalizedUser: User = {
+              id: userObj.id || userObj._id || userObj.userId || decoded.id || decoded.userId || `usr-${Date.now()}`,
+              name: userObj.name || decoded.name || data.name,
+              email: userObj.email || decoded.email || data.email,
+              role: (userObj.role || decoded.role || data.role || "customer").toLowerCase() as UserRole,
+              avatar: userObj.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
+              status: userObj.status || "active",
+              createdAt: userObj.createdAt || new Date().toISOString(),
+            };
+
+            if (typeof window !== "undefined") {
+              localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(normalizedUser));
+              localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+              if (refreshToken) localStorage.setItem("gearup_refresh_token", refreshToken);
+              document.cookie = `gearup_role=${normalizedUser.role}; path=/; max-age=86400`;
+              document.cookie = `gearup_token=${token}; path=/; max-age=86400`;
+              document.cookie = `accessToken=${token}; path=/; max-age=86400`;
+            }
+
+            return { user: normalizedUser, token };
+          }
         } catch (e) {
           console.warn("Backend API unavailable, falling back to mock engine", e);
         }
