@@ -1,26 +1,27 @@
-"use client";
+﻿"use client";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { Mail, User as UserIcon, Phone, MapPin, Zap, CheckCircle2 } from "lucide-react";
+import { Mail, Lock, User as UserIcon, Phone, MapPin, Zap, CheckCircle2 } from "lucide-react";
 
 export default function RegisterPage() {
   const { register, isLoading } = useAuth();
   const [role, setRole] = useState<"customer" | "provider">("customer");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email) return;
+    if (!name || !email || !password) return;
     setIsSubmitting(true);
     try {
-      await register({ name, email, role, phone, address });
+      await register({ name, email, password, role, phone, address });
     } catch (err) {
     } finally {
       setIsSubmitting(false);
@@ -90,6 +91,16 @@ export default function RegisterPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             leftIcon={<Mail className="w-4 h-4" />}
+            required
+          />
+
+          <Input
+            label="Password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            leftIcon={<Lock className="w-4 h-4" />}
             required
           />
 

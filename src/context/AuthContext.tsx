@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, UserRole } from "@/types";
@@ -13,6 +13,7 @@ interface AuthContextType {
   register: (data: {
     name: string;
     email: string;
+    password?: string;
     role: "customer" | "provider";
     phone?: string;
     address?: string;
@@ -29,7 +30,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Initialize user on client mount
     try {
       const stored = api.auth.getCurrentUser();
       if (stored) {
@@ -49,7 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(loggedInUser);
       toast.success(`Welcome back, ${loggedInUser.name}!`);
 
-      // Route according to role
       if (loggedInUser.role === "admin") {
         router.push("/dashboard/admin");
       } else if (loggedInUser.role === "provider") {
@@ -68,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: {
     name: string;
     email: string;
+    password?: string;
     role: "customer" | "provider";
     phone?: string;
     address?: string;
