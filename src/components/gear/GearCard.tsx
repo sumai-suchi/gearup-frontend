@@ -64,7 +64,7 @@ export function GearCard({ gear }: GearCardProps) {
 
           <div className="flex items-center gap-1 text-xs text-slate-500 mt-2">
             <MapPin className="w-3.5 h-3.5 text-slate-400" />
-            <span className="truncate">{gear.location} • {gear.condition} Condition</span>
+            <span className="truncate">{gear.location} ï¿½ {gear.condition} Condition</span>
           </div>
         </div>
 

@@ -129,7 +129,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} GearUp Outdoors, Inc. All rights reserved.</p>
+          <p>ï¿½ {new Date().getFullYear()} GearUp Outdoors, Inc. All rights reserved.</p>
           <p className="flex items-center gap-1 mt-2 md:mt-0">
             Engineered with Next.js App Router & TypeScript
           </p>

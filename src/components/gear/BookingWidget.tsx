@@ -137,7 +137,7 @@ export function BookingWidget({ gear }: BookingWidgetProps) {
         <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 space-y-2 text-xs">
           <div className="flex justify-between text-slate-600 dark:text-slate-400">
             <span>
-              {formatCurrency(gear.pricePerDay)} × {totalDays} {totalDays === 1 ? "day" : "days"}
+              {formatCurrency(gear.pricePerDay)} ï¿½ {totalDays} {totalDays === 1 ? "day" : "days"}
             </span>
             <span className="font-semibold text-slate-900 dark:text-white">{formatCurrency(subtotal)}</span>
           </div>

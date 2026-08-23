@@ -23,7 +23,7 @@ export default function CustomerDashboardPage() {
       const data = await api.rentals.getAll({ customerId: user?.id || "usr-customer-1" });
       setOrders(data);
     } catch (err) {
-      console.error("Failed to load orders:", err);
+      console.error("Failed to load customer orders:", err);
     } finally {
       setIsLoading(false);
     }
@@ -33,19 +33,22 @@ export default function CustomerDashboardPage() {
     fetchOrders();
   }, [user]);
 
-  const activeRentals = orders.filter((o) => o.status === "PICKED_UP" || o.status === "PAID" || o.status === "CONFIRMED").length;
-  const completedTrips = orders.filter((o) => o.status === "RETURNED").length;
+  // Metric aggregations for customer dashboard
+  const activeRentalsCount = orders.filter((o) => o.status === "PICKED_UP" || o.status === "PAID" || o.status === "CONFIRMED").length;
+  const completedCount = orders.filter((o) => o.status === "RETURNED").length;
   const totalSpent = orders.filter((o) => o.paymentStatus === "paid").reduce((sum, o) => sum + o.totalAmount, 0);
 
   return (
     <div className="flex flex-col md:flex-row min-h-[calc(100vh-4rem)]">
+      {/* Role Dashboard Sidebar */}
       <DashboardSidebar />
 
       <main className="flex-1 p-6 md:p-10 space-y-8 max-w-6xl">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Customer Rental Hub</h1>
-            <p className="text-xs text-slate-500">Track equipment reservations, proceed to checkout, and submit reviews</p>
+            <p className="text-xs text-slate-500">Track current gear bookings, complete payments, and leave feedback</p>
           </div>
           <Link href="/gear">
             <Button variant="primary" size="sm">
@@ -54,6 +57,7 @@ export default function CustomerDashboardPage() {
           </Link>
         </div>
 
+        {/* Overview Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -61,7 +65,7 @@ export default function CustomerDashboardPage() {
             </div>
             <div>
               <p className="text-xs text-slate-400 font-medium">Active Bookings</p>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{activeRentals}</h3>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{activeRentalsCount}</h3>
             </div>
           </div>
 
@@ -71,7 +75,7 @@ export default function CustomerDashboardPage() {
             </div>
             <div>
               <p className="text-xs text-slate-400 font-medium">Completed Trips</p>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{completedTrips}</h3>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{completedCount}</h3>
             </div>
           </div>
 
@@ -86,10 +90,11 @@ export default function CustomerDashboardPage() {
           </div>
         </div>
 
+        {/* Customer Orders Table */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">Rental Orders History</h2>
-            <p className="text-xs text-slate-400">Live order status and fulfillment actions</p>
+            <h2 className="text-base font-bold text-slate-900 dark:text-white">Rental Orders & History</h2>
+            <p className="text-xs text-slate-400">Live order status and fulfillment workflow</p>
           </div>
 
           {isLoading ? (
@@ -100,6 +105,7 @@ export default function CustomerDashboardPage() {
             <div className="p-12 text-center space-y-4">
               <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
               <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200">No rental orders placed yet</h3>
+              <p className="text-xs text-slate-400">Browse the catalog to reserve your first mountain bike, tent, or kayak.</p>
               <Link href="/gear"><Button size="sm">Explore Equipment</Button></Link>
             </div>
           ) : (
@@ -108,10 +114,10 @@ export default function CustomerDashboardPage() {
                 <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 font-bold uppercase tracking-wider">
                   <tr>
                     <th className="px-6 py-3.5">Equipment</th>
-                    <th className="px-6 py-3.5">Rental Dates</th>
+                    <th className="px-6 py-3.5">Dates & Duration</th>
                     <th className="px-6 py-3.5">Total Cost</th>
                     <th className="px-6 py-3.5">Status</th>
-                    <th className="px-6 py-3.5 text-right">Action</th>
+                    <th className="px-6 py-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -122,16 +128,16 @@ export default function CustomerDashboardPage() {
                           <img src={order.gearImage} alt="" className="w-12 h-12 rounded-xl object-cover" />
                           <div>
                             <div className="font-bold text-slate-900 dark:text-white line-clamp-1">{order.gearTitle}</div>
-                            <div className="text-[11px] text-slate-400">Order #{order.id} � {order.providerName}</div>
+                            <div className="text-[11px] text-slate-400">Order #{order.id} • {order.providerName}</div>
                           </div>
                         </div>
                       </td>
 
                       <td className="px-6 py-4">
                         <div className="font-semibold text-slate-800 dark:text-slate-200">
-                          {formatDateString(order.startDate, "MMM dd")} � {formatDateString(order.endDate, "MMM dd, yyyy")}
+                          {formatDateString(order.startDate, "MMM dd")} – {formatDateString(order.endDate, "MMM dd, yyyy")}
                         </div>
-                        <div className="text-[11px] text-slate-400">{order.totalDays} {order.totalDays === 1 ? "day" : "days"}</div>
+                        <div className="text-[11px] text-slate-400">{order.totalDays} {order.totalDays === 1 ? "day" : "days"} rental</div>
                       </td>
 
                       <td className="px-6 py-4">
@@ -144,6 +150,7 @@ export default function CustomerDashboardPage() {
                       </td>
 
                       <td className="px-6 py-4 text-right">
+                        {/* Mandatory Requirement: CONFIRMED status renders Pay Now button */}
                         {order.status === "CONFIRMED" && (
                           <Link href={`/dashboard/customer/orders/${order.id}/pay`}>
                             <Button size="sm" variant="primary" className="shadow-md shadow-emerald-500/20">
@@ -152,8 +159,13 @@ export default function CustomerDashboardPage() {
                           </Link>
                         )}
 
+                        {/* Mandatory Requirement: RETURNED status renders Leave Review button */}
                         {order.status === "RETURNED" && !order.reviewSubmitted && (
-                          <Button size="sm" variant="secondary" onClick={() => setSelectedReviewOrder(order)}>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => setSelectedReviewOrder(order)}
+                          >
                             <Star className="w-3.5 h-3.5 mr-1 text-amber-400" /> Review Gear
                           </Button>
                         )}
@@ -165,7 +177,7 @@ export default function CustomerDashboardPage() {
                         )}
 
                         {order.status === "PLACED" && (
-                          <span className="text-[11px] text-amber-600 font-medium">Pending Provider</span>
+                          <span className="text-[11px] text-amber-600 font-medium">Awaiting Provider</span>
                         )}
 
                         {order.status === "PAID" && (
@@ -173,7 +185,7 @@ export default function CustomerDashboardPage() {
                         )}
 
                         {order.status === "PICKED_UP" && (
-                          <span className="text-[11px] text-emerald-600 font-medium">In Use</span>
+                          <span className="text-[11px] text-emerald-600 font-medium">Gear in Use</span>
                         )}
                       </td>
                     </tr>
@@ -185,6 +197,7 @@ export default function CustomerDashboardPage() {
         </div>
       </main>
 
+      {/* Review Submission Modal */}
       <ReviewModal
         order={selectedReviewOrder}
         isOpen={!!selectedReviewOrder}
