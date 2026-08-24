@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, UserRole } from "@/types";
@@ -13,7 +13,7 @@ interface AuthContextType {
   register: (data: {
     name: string;
     email: string;
-    role: "customer" | "provider";
+    role: "customer" | "provider" | "CUSTOMER" | "PROVIDER";
     password?: string;
   }) => Promise<void>;
   logout: () => void;
@@ -43,13 +43,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password?: string) => {
     setIsLoading(true);
     try {
-      const { user: loggedInUser } = await api.auth.login(email, password);
-      setUser(loggedInUser);
-      toast.success(`Welcome back, ${loggedInUser.name}!`);
+      const res = await api.auth.login(email, password);
+      const loggedInUser = res?.user;
+      console.log(loggedInUser);
+      if (!loggedInUser) throw new Error("Invalid user response from server.");
 
-      if (loggedInUser.role === "admin") {
+      setUser(loggedInUser);
+      toast.success(`Welcome back, ${loggedInUser.name || "User"}!`);
+
+      const normalizedRole = String(loggedInUser?.role ).toLowerCase();
+      if (normalizedRole === "admin") {
         router.push("/dashboard/admin");
-      } else if (loggedInUser.role === "provider") {
+      } else if (normalizedRole === "provider") {
         router.push("/dashboard/provider");
       } else {
         router.push("/dashboard/customer");
@@ -65,16 +70,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: {
     name: string;
     email: string;
-    role: "customer" | "provider";
+    role: "customer" | "provider" | "CUSTOMER" | "PROVIDER";
     password?: string;
   }) => {
     setIsLoading(true);
     try {
-      const { user: registeredUser } = await api.auth.register(data);
+      const res = await api.auth.register(data);
+      const registeredUser = res?.user;
+      if (!registeredUser) throw new Error("Invalid registration response from server.");
+
       setUser(registeredUser);
       toast.success(`Account created successfully! Welcome to GearUp.`);
 
-      if (registeredUser.role === "provider") {
+      const normalizedRole = String(registeredUser.role || "customer").toLowerCase();
+      if (normalizedRole === "provider") {
         router.push("/dashboard/provider");
       } else {
         router.push("/dashboard/customer");
@@ -95,12 +104,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const switchDemoRole = async (role: UserRole) => {
-    const demoEmails: Record<UserRole, string> = {
+    const normalizedRole = String(role).toLowerCase();
+    const demoEmails: Record<string, string> = {
       admin: "admin@gearup.com",
       provider: "provider@gearup.com",
       customer: "customer@gearup.com",
     };
-    await login(demoEmails[role]);
+    await login(demoEmails[normalizedRole] || "customer@gearup.com");
   };
 
   return (
